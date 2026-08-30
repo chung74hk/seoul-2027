@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+    function email() {
+      return request.auth.token.email;
+    }
+    function isOwner(data) {
+      return signedIn() && data.owner == email();
+    }
+    function isEditor(data) {
+      return signedIn() && (data.owner == email() || email() in data.editors);
+    }
+    function canView(data) {
+      return signedIn() && (data.owner == email() || email() in data.editors || email() in data.viewers);
+    }
+
+    match /trips/{tripId} {
+      allow create: if signedIn()
+        && request.resource.data.owner == email()
+        && request.resource.data.editors is list
+        && request.resource.data.viewers is list;
+
+      allow read: if canView(resource.data);
+
+      // Owner can edit itinerary and collaboration permissions.
+      allow update: if isOwner(resource.data)
+        && request.resource.data.owner == resource.data.owner;
+
+      // Editors can change shared trip content, but cannot change access lists or owner.
+      allow update: if isEditor(resource.data)
+        && !isOwner(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['days','checks','updatedAt','lastEditedBy']);
+
+      allow delete: if isOwner(resource.data);
+    }
+  }
+}
