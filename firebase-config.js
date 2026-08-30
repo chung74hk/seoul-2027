@@ -1,4 +1,6 @@
-const firebaseConfig = {
+// Firebase configuration for Seoul 2027 Shared Family Planner.
+// This config identifies the Firebase project. Access is enforced by Authentication + Firestore Security Rules.
+export const firebaseConfig = {
   apiKey: "AIzaSyBv6ieg7m0u4rTvU937ZA7OICFCkkThY3Q",
   authDomain: "seoul-2027.firebaseapp.com",
   projectId: "seoul-2027",
